@@ -69,13 +69,15 @@ Images are saved automatically in a `dataset/` folder, organised by class:
 ```
 dataset/
 ├── scissor/
-│   ├── 00001.jpg
-│   ├── 00002.jpg
+│   ├── scissors-product-photo-01.jpg
+│   ├── my_scissors_image.jpg
 │   └── ...
 ├── eraser/
 ├── ruler/
 └── highlighter/
 ```
+
+Filenames are kept as-is from the source URL (sanitized, forced to a `.jpg` extension) instead of being renumbered — if two downloads would collide on the same name, a `_1`, `_2`, ... suffix is appended.
 
 Run the script once per class and it will create the correct subfolder automatically.
 
@@ -102,6 +104,14 @@ Every downloaded file is decoded with Pillow and re-encoded as a genuine JPEG be
 When `TARGET_CLASS = "highlighter"`, the script does two things to keep the dataset to highlighter **pens/markers** and out of cosmetics:
 - The built-in search queries for this class are stationery-worded (e.g. `"highlighter pen stationery -makeup -cosmetic"`).
 - Each search result's title/URL is checked against a list of makeup-related keywords (`makeup`, `cosmetic`, `concealer`, `contour`, `blush`, `foundation`, `highlighter palette`, `face highlighter`, etc.) and skipped if matched, before it's ever downloaded.
+
+## 🎯 Single Item / White Background Guard
+
+Search queries are worded to ask for a single item on a white background (e.g. `"single scissors isolated on white background"`), and every downloaded image is additionally checked before being saved:
+- **White background** — a sample of border pixels must be mostly near-white.
+- **Single item** — the image is downscaled and thresholded against white, then connected non-white regions are counted; the image is only kept if exactly one blob is found.
+
+Both checks are pixel-heuristics (not object detection), so they aren't perfect — a product photo with a soft shadow/reflection, or an object with a large gap (e.g. wide-open scissors), can occasionally be rejected or misjudged. If you're getting too few images, you can relax the thresholds (`WHITE_BORDER_MIN_RATIO`, `OBJECT_MIN_AREA`, `OBJECT_DILATE`) near the top of `scraper.py`.
 
 ---
 
